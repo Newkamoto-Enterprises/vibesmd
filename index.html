@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VIBES.md — Skills Graph for Agentic Coding</title>
+  <meta name="description"
+    content="Augment agentic coding with procedural knowledge. Fast search, instant injection, minimal context bloat.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=JetBrains+Mono:wght@300;400;500&display=swap"
+    rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg-dark: #000000;
+      --pipe-color: rgba(255, 255, 255, 0.12);
+      --pipe-glow: rgba(255, 255, 255, 0.25);
+      --dot-color: #ffffff;
+      --accent: #E0FD8C;
+      --accent-glow: rgba(224, 253, 140, 0.5);
+      --text-primary: rgba(255, 255, 255, 0.95);
+      --text-secondary: rgba(255, 255, 255, 0.5);
+      --text-tertiary: rgba(255, 255, 255, 0.3);
+      --glass-panel: rgba(255, 255, 255, 0.04);
+      --glass-border: rgba(255, 255, 255, 0.08);
+    }
+
+    html,
+    body {
+      height: 100%;
+    }
+
+    body {
+      font-family: 'JetBrains Mono', 'Space Mono', monospace;
+      background: var(--bg-dark);
+      color: var(--text-primary);
+      overflow-x: hidden;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      /* CRT subtle glow */
+      text-shadow: 0 0 1px rgba(255, 255, 255, 0.2);
+    }
+
+    /* ==========================================
+       SUNRISE EFFECT
+       ========================================== */
+    .sunrise {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%) translateY(70%);
+      width: 200%;
+      height: 500px;
+      background: radial-gradient(ellipse 70% 100% at 50% 100%,
+          rgba(255, 255, 255, 0.06) 0%,
+          rgba(255, 255, 255, 0.03) 40%,
+          transparent 80%);
+      pointer-events: none;
+      z-index: 0;
+      animation: sunriseFloat 2.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      animation-delay: 1.5s;
+      opacity: 0;
+    }
+
+    @keyframes sunriseFloat {
+      0% {
+        opacity: 0;
+        transform: translateX(-50%) translateY(100%);
+      }
+
+      100% {
+        opacity: 1;
+        transform: translateX(-50%) translateY(40%);
+      }
+    }
+
+    /* ==========================================
+       CONTAINER
+       ========================================== */
+    .container {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 800px;
+      padding: 80px 24px 100px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* ==========================================
+       HERO — Logo + Pipes + IDEs
+       ========================================== */
+    .hero {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      margin-bottom: 80px;
+    }
+
+    .logo-container {
+      position: relative;
+      z-index: 3;
+      opacity: 0;
+      animation: fadeIn 0.8s ease-out 0.2s forwards;
+    }
+
+    @keyframes fadeIn {
+      to {
+        opacity: 1;
+      }
+    }
+
+    .logo {
+      height: 48px;
+      width: auto;
+      image-rendering: pixelated;
+      filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.4));
+    }
+
+    .tagline {
+      margin-top: 12px;
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--text-secondary);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      opacity: 0;
+      animation: fadeIn 0.8s ease-out 0.6s forwards;
+    }
+
+    /* ==========================================
+       PIPE CANVAS
+       ========================================== */
+    #pipe-canvas {
+      position: absolute;
+      top: 90px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 800px;
+      height: 180px;
+      z-index: 0;
+    }
+
+    /* ==========================================
+       IDE ROW
+       ========================================== */
+    .ide-row {
+      position: relative;
+      margin-top: 150px;
+      opacity: 0;
+      animation: fadeInUp 1s cubic-bezier(0.16, 1, 0.3, 1) 1s forwards;
+      z-index: 2;
+    }
+
+    @keyframes fadeInUp {
+      0% {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .ide-row img {
+      position: relative;
+      z-index: 2;
+      height: 80px;
+      width: auto;
+      filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 1));
+    }
+
+    .ide-logos {
+      display: flex;
+      justify-content: center;
+      gap: 50px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .ide-logos img {
+      height: 80px;
+      width: auto;
+      filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 1));
+    }
+
+    /* Energy Beam behind IDEs */
+    .energy-beam {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 200%;
+      height: 160px;
+      background: linear-gradient(90deg,
+          transparent 0%,
+          rgba(255, 255, 255, 0.2) 10%,
+          rgba(255, 255, 255, 0.35) 50%,
+          rgba(255, 255, 255, 0.2) 90%,
+          transparent 100%);
+      border-radius: 200px;
+      filter: blur(80px);
+      z-index: 1;
+      opacity: 0;
+      animation: beamGrow 4s cubic-bezier(0.25, 0.46, 0.45, 0.94) 1.5s forwards;
+    }
+
+    @keyframes beamGrow {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.3, 0.2);
+      }
+
+      100% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1, 1);
+      }
+    }
+
+    /* Beam pulse animation */
+    .energy-beam::after {
+      content: '';
+      position: absolute;
+      top: -30%;
+      left: -10%;
+      right: -10%;
+      bottom: -30%;
+      background: inherit;
+      filter: blur(100px);
+      animation: beamPulse 4s ease-in-out 4.5s infinite;
+    }
+
+    @keyframes beamPulse {
+
+      0%,
+      100% {
+        opacity: 0.4;
+        transform: scaleY(1) scaleX(1);
+      }
+
+      50% {
+        opacity: 0.7;
+        transform: scaleY(1.3) scaleX(1.05);
+      }
+    }
+
+    /* ==========================================
+       VALUE PROP
+       ========================================== */
+    .value-prop {
+      text-align: center;
+      max-width: 700px;
+      margin-top: 30px;
+      opacity: 0;
+      animation: fadeIn 1s ease-out 2s forwards;
+    }
+
+    .value-prop h2 {
+      font-size: 26px;
+      font-weight: 500;
+      line-height: 1.4;
+      margin-bottom: 16px;
+      color: var(--text-primary);
+      overflow: hidden;
+    }
+
+    .typewriter {
+      display: inline-block;
+      overflow: hidden;
+      white-space: nowrap;
+      animation: typing 1s steps(45, end) 2s forwards;
+      width: 0;
+    }
+
+    @keyframes typing {
+      from {
+        width: 0;
+      }
+
+      to {
+        width: 100%;
+      }
+    }
+
+    .value-prop p {
+      font-size: 15px;
+      font-weight: 300;
+      color: var(--text-secondary);
+      line-height: 1.9;
+      overflow: hidden;
+    }
+
+    .typewriter-p {
+      display: inline;
+      overflow: hidden;
+      white-space: normal;
+      animation: typing-p 2s steps(120, end) 3.2s forwards;
+      width: 0;
+    }
+
+    @keyframes typing-p {
+      from {
+        width: 0;
+        opacity: 0;
+      }
+
+      0.1% {
+        opacity: 1;
+      }
+
+      to {
+        width: 100%;
+        opacity: 1;
+      }
+    }
+
+    /* ==========================================
+       SKILL SHARING DIAGRAM
+       ========================================== */
+    .skill-sharing {
+      margin-top: 120px;
+      text-align: center;
+      opacity: 0;
+      animation: fadeIn 1s ease-out 3s forwards;
+    }
+
+    .skill-sharing h3 {
+      font-size: 14px;
+      font-weight: 400;
+      color: var(--text-secondary);
+      margin-bottom: 30px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+
+    .sharing-diagram {
+      position: relative;
+      width: 100%;
+      max-width: 1100px;
+      height: 420px;
+      margin: 0 auto;
+      padding: 0 40px;
+      box-sizing: border-box;
+    }
+
+    #sharing-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .sharing-explanation {
+      max-width: 700px;
+      margin: 40px auto 0;
+      padding: 0 20px;
+    }
+
+    .sharing-explanation p {
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--text-secondary);
+      text-align: center;
+    }
+
+    /* ==========================================
+       INSTALL COMMAND
+       ========================================== */
+    .install-section {
+      margin: 100px auto 80px;
+      text-align: center;
+      max-width: 700px;
+      padding: 0 20px;
+      opacity: 0;
+      animation: fadeIn 1s ease-out 3.5s forwards;
+    }
+
+    .install-command {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 12px;
+      padding: 32px 48px;
+      display: inline-block;
+      margin-bottom: 16px;
+    }
+
+    .install-command code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 22px;
+      color: var(--text-primary);
+      letter-spacing: 0.02em;
+    }
+
+    .install-hint {
+      font-size: 13px;
+      color: var(--text-secondary);
+      opacity: 0.6;
+    }
+
+    /* ==========================================
+       BENEFITS SECTION
+       ========================================== */
+    .benefits-section {
+      margin: 80px auto 100px;
+      max-width: 900px;
+      padding: 0 20px;
+      opacity: 0;
+      animation: fadeIn 1s ease-out 4s forwards;
+    }
+
+    .benefits-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 40px;
+    }
+
+    .benefit-block {
+      text-align: center;
+      padding: 24px 16px;
+    }
+
+    .benefit-icon {
+      font-size: 32px;
+      margin-bottom: 16px;
+      opacity: 0.9;
+    }
+
+    .benefit-title {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+      letter-spacing: 0.02em;
+    }
+
+    .benefit-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      opacity: 0.8;
+    }
+
+    @media (max-width: 700px) {
+      .benefits-grid {
+        grid-template-columns: 1fr;
+        gap: 32px;
+      }
+    }
+
+    /* ==========================================
+       HEADER CTA (Top Right)
+       ========================================== */
+    .header-cta {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 100;
+      opacity: 0;
+      animation: fadeIn 0.8s ease-out 0.8s forwards;
+    }
+
+    .cta-button {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 500;
+      padding: 10px 20px;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .cta-button:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.5);
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.15);
+    }
+
+    /* ==========================================
+       FOOTER
+       ========================================== */
+    .footer {
+      margin-top: 80px;
+      opacity: 0;
+      animation: fadeIn 0.8s ease-out 2s forwards;
+    }
+
+    .footer p {
+      font-size: 10px;
+      color: var(--text-tertiary);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+
+    /* ==========================================
+       RESPONSIVE
+       ========================================== */
+    @media (max-width: 600px) {
+      .container {
+        padding: 60px 16px 80px;
+      }
+
+      .logo {
+        height: 36px;
+      }
+
+      .ide-row img {
+        height: 40px;
+      }
+
+      .ide-row {
+        margin-top: 180px;
+      }
+
+      #pipe-canvas {
+        height: 160px;
+      }
+
+      .value-prop h2 {
+        font-size: 16px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="header-cta">
+    <a href="#waitlist" class="cta-button">Join the Waitlist</a>
+  </div>
+
+  <div class="sunrise"></div>
+
+  <div class="container">
+    <section class="hero">
+      <div class="logo-container">
+        <img src="logos/VIBES.md.png" alt="VIBES.md" class="logo">
+        <p class="tagline">Skills Graph for Agentic Coding</p>
+      </div>
+
+      <canvas id="pipe-canvas"></canvas>
+
+      <div class="ide-row">
+        <div class="energy-beam"></div>
+        <div class="ide-logos">
+          <img src="logos/image 5.png" alt="Claude Code">
+          <img src="logos/image 4.png" alt="Cursor">
+          <img src="logos/image 1.png" alt="Aurora">
+          <img src="logos/image 3.png" alt="Windsurf">
+        </div>
+      </div>
+    </section>
+
+    <section class="value-prop">
+      <h2><span class="typewriter">> Supercharge your agent with procedural knowledge_</span></h2>
+      <p><span class="typewriter-p">VIBES.md is a skill graph that augments agentic coding with procedural knowledge.
+          Evolutionary search finds, ranks, and injects the right skills at inference time — without bloating your
+          context.</span></p>
+    </section>
+
+    <section class="install-section">
+      <div class="install-command">
+        <code>pip install vibes_graph</code>
+      </div>
+      <p class="install-hint">Get started in seconds</p>
+    </section>
+
+    <section class="benefits-section">
+      <div class="benefits-grid">
+        <div class="benefit-block">
+          <div class="benefit-icon">⚡</div>
+          <h4 class="benefit-title">Zero Context Bloat</h4>
+          <p class="benefit-desc">Skills are injected precisely when needed, not preloaded into every prompt.</p>
+        </div>
+        <div class="benefit-block">
+          <div class="benefit-icon">🔄</div>
+          <h4 class="benefit-title">Evolutionary Ranking</h4>
+          <p class="benefit-desc">The best skills rise to the top through continuous community validation.</p>
+        </div>
+        <div class="benefit-block">
+          <div class="benefit-icon">🌐</div>
+          <h4 class="benefit-title">Shared Memory</h4>
+          <p class="benefit-desc">Every agent contributes to a collective intelligence that benefits all developers.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="skill-sharing">
+      <h3>Discover once, benefit everyone</h3>
+      <div class="sharing-diagram">
+        <canvas id="sharing-canvas"></canvas>
+      </div>
+      <div class="sharing-explanation">
+        <p>Each agent contributes discoveries to a shared epistemic memory. When one developer's agent learns a new
+          skill, pattern, or solution, it becomes available to all agents in the network — supercharging every developer
+          without duplicating effort.</p>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <p>© 2026 VIBES.md</p>
+    </footer>
+  </div>
+
+  <script>
+    // ==========================================
+    // TERMINAL PIPE ANIMATION
+    // Dots flow along fixed paths like unix pipes
+    // ==========================================
+    const canvas = document.getElementById('pipe-canvas');
+    const ctx = canvas.getContext('2d');
+    let animationId;
+    let dots = [];
+
+    // Retina scaling
+    function resizeCanvas() {
+      const rect = canvas.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    // Path definitions (normalized 0-1 coordinates)
+    // Rigid right-angle pipes: down → horizontal → down
+    const BRANCH_Y = 0.15;  // Shorter trunk
+    const END_Y = 0.85;     // Barely touches top of logos
+
+    // 4 IDE target X positions (aligned to logo centers with 50px gap)
+    const IDE_POSITIONS = [0.20, 0.40, 0.60, 0.80];
+
+    // A dot that travels along rigid pipe paths
+    class PipeDot {
+      constructor(targetIndex) {
+        this.targetIndex = targetIndex;
+        this.progress = 0;
+        this.speed = 0.015 + Math.random() * 0.01; // Faster
+        this.size = 1.8;
+        this.baseAlpha = 0.6;
+      }
+
+      // Rigid L-shaped path: down trunk → horizontal → down to IDE
+      getPosition(rect) {
+        const centerX = rect.width / 2;
+        const targetX = rect.width * IDE_POSITIONS[this.targetIndex];
+        const branchY = rect.height * BRANCH_Y;
+        const endY = rect.height * END_Y;
+
+        // Calculate path segments
+        const horizontalDist = Math.abs(targetX - centerX);
+        const trunkLength = branchY;
+        const dropLength = endY - branchY;
+        const totalPath = trunkLength + horizontalDist + dropLength;
+
+        // Normalized segment boundaries
+        const seg1End = trunkLength / totalPath;
+        const seg2End = (trunkLength + horizontalDist) / totalPath;
+
+        if (this.progress < seg1End) {
+          // Segment 1: Down the trunk
+          const t = this.progress / seg1End;
+          return { x: centerX, y: t * branchY };
+        } else if (this.progress < seg2End) {
+          // Segment 2: Horizontal to target column
+          const t = (this.progress - seg1End) / (seg2End - seg1End);
+          const dir = targetX > centerX ? 1 : -1;
+          return { x: centerX + dir * t * horizontalDist, y: branchY };
+        } else {
+          // Segment 3: Down to IDE
+          const t = (this.progress - seg2End) / (1 - seg2End);
+          return { x: targetX, y: branchY + t * dropLength };
+        }
+      }
+
+      update() {
+        this.progress += this.speed;
+        return this.progress < 1;
+      }
+
+      draw(rect) {
+        const pos = this.getPosition(rect);
+        // Progressive shine - gets dramatically brighter near logos
+        const progressCubed = this.progress * this.progress * this.progress;
+        const shine = 0.5 + (progressCubed * 0.5);
+        const glowSize = this.size + 1 + (progressCubed * 8);
+
+        // Intense glow near the end
+        ctx.beginPath();
+        ctx.arc(pos.x, pos.y, glowSize, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 255, 255, ${shine * 0.5})`;
+        ctx.fill();
+
+        // Bright core dot
+        ctx.beginPath();
+        ctx.arc(pos.x, pos.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 255, 255, ${Math.min(1, shine + 0.2)})`;
+        ctx.fill();
+      }
+    }
+
+    // Draw pipe structure with rounded corners using quadratic curves
+    function drawPipes(rect) {
+      const centerX = rect.width / 2;
+      const branchY = rect.height * BRANCH_Y;
+      const endY = rect.height * END_Y;
+      const r = 10; // corner radius
+
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.18)';
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      // Draw each pipe from center to IDE
+      for (let i = 0; i < 4; i++) {
+        const targetX = rect.width * IDE_POSITIONS[i];
+
+        ctx.beginPath();
+        // Start from top center
+        ctx.moveTo(centerX, 0);
+        // Down to just before the corner
+        ctx.lineTo(centerX, branchY - r);
+        // Rounded corner using quadratic curve
+        ctx.quadraticCurveTo(centerX, branchY, centerX + (targetX > centerX ? r : -r), branchY);
+        // Horizontal to just before the drop
+        ctx.lineTo(targetX + (targetX > centerX ? -r : r), branchY);
+        // Second rounded corner
+        ctx.quadraticCurveTo(targetX, branchY, targetX, branchY + r);
+        // Down to the end
+        ctx.lineTo(targetX, endY);
+        ctx.stroke();
+      }
+
+      // Junction dot at center
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+      ctx.beginPath();
+      ctx.arc(centerX, branchY, 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Spawn dots - waterfall effect
+    function spawnDot() {
+      if (dots.length < 80) {
+        const targetIndex = Math.floor(Math.random() * 4);
+        dots.push(new PipeDot(targetIndex));
+      }
+    }
+
+    // Main animation loop
+    function animate() {
+      const rect = canvas.getBoundingClientRect();
+      ctx.clearRect(0, 0, rect.width, rect.height);
+
+      // Draw static pipes first
+      drawPipes(rect);
+
+      // Update and draw dots
+      dots = dots.filter(dot => {
+        const alive = dot.update();
+        if (alive) {
+          dot.draw(rect);
+        }
+        return alive;
+      });
+
+      animationId = requestAnimationFrame(animate);
+    }
+
+    // Start after delay
+    setTimeout(() => {
+      animate();
+      // Spawn dots very frequently for dense waterfall effect
+      setInterval(spawnDot, 35);
+    }, 600);
+
+    // Visibility handling
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        cancelAnimationFrame(animationId);
+      } else {
+        animate();
+      }
+    });
+
+    // ==========================================
+    // SKILL SHARING DIAGRAM - PULLEY SYSTEM
+    // ==========================================
+    const sharingCanvas = document.getElementById('sharing-canvas');
+    const sCtx = sharingCanvas.getContext('2d');
+    let sTime = 0;
+
+    // Load IDE logos
+    const ideLogos = [
+      { src: 'logos/image 5.png', img: new Image() },
+      { src: 'logos/image 4.png', img: new Image() },
+      { src: 'logos/image 1.png', img: new Image() },
+      { src: 'logos/image 3.png', img: new Image() },
+    ];
+    ideLogos.forEach(logo => logo.img.src = logo.src);
+
+    function resizeSharingCanvas() {
+      const rect = sharingCanvas.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      sharingCanvas.width = rect.width * dpr;
+      sharingCanvas.height = rect.height * dpr;
+      sCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    resizeSharingCanvas();
+    window.addEventListener('resize', resizeSharingCanvas);
+
+    // Layout constants - with padding
+    const PADDING = 60;
+    const DEV_X = [0.15, 0.38, 0.62, 0.85];
+    const IDE_Y = 0.20;
+    const DEV_Y = 0.48;
+    const LOOP_WIDTH = 80;
+    const MEMORY_CY = 0.85;
+    const MEMORY_WIDTH = 0.70;
+    const MEMORY_HEIGHT = 30;
+    const MEMORY_RADIUS = 15;
+
+    // Circle sizes
+    const IDE_RADIUS = 35;
+    const DEV_RADIUS = 28;
+
+    // Active dots
+    let loopDots = [[], [], [], []];
+    let memoryDots = [];
+    let transferDots = [];
+
+    // Simple dot - no glow, just solid
+    class LoopDot {
+      constructor(devIndex) {
+        this.devIndex = devIndex;
+        this.progress = 0;
+        this.speed = 0.004 + Math.random() * 0.003;
+        this.size = 3;
+      }
+
+      getPosition(rect) {
+        const w = rect.width;
+        const h = rect.height;
+        const cx = w * DEV_X[this.devIndex];
+        const ideY = h * IDE_Y;
+        const devY = h * DEV_Y;
+        const halfW = LOOP_WIDTH / 2;
+
+        // Path segments: left-down, DEV-arc, right-up, IDE-arc
+        const verticalLen = devY - ideY;
+        const arcLen = Math.PI * halfW;  // semicircle
+        const total = verticalLen + arcLen + verticalLen + arcLen;
+
+        const s1 = verticalLen / total;
+        const s2 = (verticalLen + arcLen) / total;
+        const s3 = (verticalLen + arcLen + verticalLen) / total;
+
+        if (this.progress < s1) {
+          // Left side going down
+          const t = this.progress / s1;
+          return { x: cx - halfW, y: ideY + t * verticalLen };
+        } else if (this.progress < s2) {
+          // Bottom semicircle around DEV (left to right)
+          const t = (this.progress - s1) / (s2 - s1);
+          const angle = Math.PI - t * Math.PI;  // π to 0
+          return { x: cx + Math.cos(angle) * halfW, y: devY - Math.sin(angle) * halfW };
+        } else if (this.progress < s3) {
+          // Right side going up
+          const t = (this.progress - s2) / (s3 - s2);
+          return { x: cx + halfW, y: devY - t * verticalLen };
+        } else {
+          // Top semicircle around IDE (right to left)
+          const t = (this.progress - s3) / (1 - s3);
+          const angle = -t * Math.PI;  // 0 to -π
+          return { x: cx + Math.cos(angle) * halfW, y: ideY - Math.sin(angle) * halfW };
+        }
+      }
+
+      update() {
+        this.progress += this.speed;
+        return this.progress < 1;
+      }
+
+      draw(rect) {
+        const pos = this.getPosition(rect);
+        sCtx.beginPath();
+        sCtx.arc(pos.x, pos.y, this.size, 0, Math.PI * 2);
+        sCtx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        sCtx.fill();
+      }
+    }
+
+    // Memory dot - travels along stadium shape
+    class MemoryDot {
+      constructor() {
+        this.progress = 0;
+        this.speed = 0.002 + Math.random() * 0.002;
+        this.size = 3;
+      }
+
+      getPosition(rect) {
+        const w = rect.width;
+        const h = rect.height;
+        const mcx = w * 0.5;
+        const mcy = h * MEMORY_CY;
+        const halfW = (w * MEMORY_WIDTH) / 2 - MEMORY_RADIUS;
+        const r = MEMORY_RADIUS;
+
+        // Stadium perimeter: left-arc, bottom, right-arc, top
+        const arcLen = Math.PI * r;
+        const straightLen = halfW * 2;
+        const total = arcLen + straightLen + arcLen + straightLen;
+
+        const s1 = arcLen / total;
+        const s2 = (arcLen + straightLen) / total;
+        const s3 = (arcLen + straightLen + arcLen) / total;
+
+        if (this.progress < s1) {
+          // Left semicircle
+          const t = this.progress / s1;
+          const angle = Math.PI / 2 + t * Math.PI;
+          return { x: mcx - halfW + Math.cos(angle) * r, y: mcy + Math.sin(angle) * r };
+        } else if (this.progress < s2) {
+          // Bottom straight
+          const t = (this.progress - s1) / (s2 - s1);
+          return { x: mcx - halfW + t * (halfW * 2), y: mcy + r };
+        } else if (this.progress < s3) {
+          // Right semicircle
+          const t = (this.progress - s2) / (s3 - s2);
+          const angle = -Math.PI / 2 + t * Math.PI;
+          return { x: mcx + halfW + Math.cos(angle) * r, y: mcy + Math.sin(angle) * r };
+        } else {
+          // Top straight
+          const t = (this.progress - s3) / (1 - s3);
+          return { x: mcx + halfW - t * (halfW * 2), y: mcy - r };
+        }
+      }
+
+      update() {
+        this.progress += this.speed;
+        return this.progress < 1;
+      }
+
+      draw(rect) {
+        const pos = this.getPosition(rect);
+        sCtx.beginPath();
+        sCtx.arc(pos.x, pos.y, this.size, 0, Math.PI * 2);
+        sCtx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        sCtx.fill();
+      }
+    }
+
+    // Transfer dot - between loop and memory
+    class TransferDot {
+      constructor(devIndex, toMemory) {
+        this.devIndex = devIndex;
+        this.toMemory = toMemory;
+        this.progress = 0;
+        this.speed = 0.006 + Math.random() * 0.004;
+        this.size = 3;
+      }
+
+      getPosition(rect) {
+        const w = rect.width;
+        const h = rect.height;
+        const devX = w * DEV_X[this.devIndex];
+        const halfW = LOOP_WIDTH / 2;
+        const startY = h * DEV_Y + halfW;  // Bottom of pulley arc
+        const endY = h * MEMORY_CY - MEMORY_RADIUS;  // Top of memory
+
+        if (this.toMemory) {
+          return { x: devX, y: startY + (endY - startY) * this.progress };
+        } else {
+          return { x: devX, y: endY + (startY - endY) * this.progress };
+        }
+      }
+
+      update() {
+        this.progress += this.speed;
+        return this.progress < 1;
+      }
+
+      draw(rect) {
+        const pos = this.getPosition(rect);
+        sCtx.beginPath();
+        sCtx.arc(pos.x, pos.y, this.size, 0, Math.PI * 2);
+        sCtx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        sCtx.fill();
+      }
+    }
+
+    // Draw pulley loop pipe - wraps around circles
+    function drawLoopPipe(rect, devIndex) {
+      const w = rect.width;
+      const h = rect.height;
+      const cx = w * DEV_X[devIndex];
+      const ideY = h * IDE_Y;
+      const devY = h * DEV_Y;
+      const halfW = LOOP_WIDTH / 2;
+
+      sCtx.strokeStyle = 'rgba(255, 255, 255, 0.18)';
+      sCtx.lineWidth = 2;
+      sCtx.lineCap = 'round';
+      sCtx.lineJoin = 'round';
+
+      // Pulley wraps around IDE circle (top) and DEV circle (bottom)
+      // Left side: goes down, wraps around DEV bottom, comes up right side, wraps around IDE top
+      sCtx.beginPath();
+
+      // Start at left of IDE circle
+      sCtx.moveTo(cx - halfW, ideY);
+
+      // Left vertical down to DEV level
+      sCtx.lineTo(cx - halfW, devY);
+
+      // Wrap around DEV circle bottom (semicircle from left to right)
+      sCtx.arc(cx, devY, halfW, Math.PI, 0, true);
+
+      // Right vertical up to IDE level
+      sCtx.lineTo(cx + halfW, ideY);
+
+      // Wrap around IDE circle top (semicircle from right to left)
+      sCtx.arc(cx, ideY, halfW, 0, Math.PI, true);
+
+      sCtx.stroke();
+
+      // Vertical pipe from DEV to memory - starts at bottom of DEV embrace
+      const devBottom = devY + halfW;
+      const memTop = h * MEMORY_CY - MEMORY_RADIUS;
+      sCtx.beginPath();
+      sCtx.moveTo(cx, devBottom);
+      sCtx.lineTo(cx, memTop);
+      sCtx.stroke();
+    }
+
+    // Draw stadium-shaped memory (rounded rectangle) - pipes connect to top
+    function drawMemoryPipe(rect) {
+      const w = rect.width;
+      const h = rect.height;
+      const mcx = w * 0.5;
+      const mcy = h * MEMORY_CY;
+      const halfW = (w * MEMORY_WIDTH) / 2;
+      const r = MEMORY_RADIUS;
+
+      sCtx.strokeStyle = 'rgba(255, 255, 255, 0.18)';
+      sCtx.lineWidth = 2;
+
+      // Stadium shape - fully rounded ends
+      sCtx.beginPath();
+      // Start at top left
+      sCtx.moveTo(mcx - halfW + r, mcy - r);
+      // Top edge
+      sCtx.lineTo(mcx + halfW - r, mcy - r);
+      // Right semicircle
+      sCtx.arc(mcx + halfW - r, mcy, r, -Math.PI / 2, Math.PI / 2);
+      // Bottom edge
+      sCtx.lineTo(mcx - halfW + r, mcy + r);
+      // Left semicircle
+      sCtx.arc(mcx - halfW + r, mcy, r, Math.PI / 2, -Math.PI / 2);
+      sCtx.stroke();
+    }
+
+    // Draw nodes on top
+    function drawNodes(rect) {
+      const w = rect.width;
+      const h = rect.height;
+
+      DEV_X.forEach((dx, i) => {
+        const cx = w * dx;
+        const ideY = h * IDE_Y;
+        const devY = h * DEV_Y;
+        const logoSize = 50;
+
+        // IDE circle
+        sCtx.fillStyle = '#000000';
+        sCtx.beginPath();
+        sCtx.arc(cx, ideY, IDE_RADIUS, 0, Math.PI * 2);
+        sCtx.fill();
+        sCtx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+        sCtx.lineWidth = 2;
+        sCtx.stroke();
+
+        // IDE logo
+        const logo = ideLogos[i].img;
+        if (logo.complete) {
+          sCtx.drawImage(logo, cx - logoSize / 2, ideY - logoSize / 2, logoSize, logoSize);
+        }
+
+        // DEV circle
+        sCtx.fillStyle = '#000000';
+        sCtx.beginPath();
+        sCtx.arc(cx, devY, DEV_RADIUS, 0, Math.PI * 2);
+        sCtx.fill();
+        sCtx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+        sCtx.lineWidth = 2;
+        sCtx.stroke();
+
+        // DEV label
+        sCtx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+        sCtx.font = '10px JetBrains Mono';
+        sCtx.textAlign = 'center';
+        sCtx.fillText('DEV', cx, devY + 4);
+      });
+
+      // Memory label
+      sCtx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+      sCtx.font = '10px JetBrains Mono';
+      sCtx.textAlign = 'center';
+      sCtx.fillText('SHARED SKILLS', w * 0.5, h * MEMORY_CY + 4);
+    }
+
+    function spawnDots() {
+      for (let i = 0; i < 4; i++) {
+        if (loopDots[i].length < 3 && Math.random() < 0.025) {
+          loopDots[i].push(new LoopDot(i));
+        }
+      }
+      if (memoryDots.length < 6 && Math.random() < 0.03) {
+        memoryDots.push(new MemoryDot());
+      }
+      if (transferDots.length < 3 && Math.random() < 0.012) {
+        const devIndex = Math.floor(Math.random() * 4);
+        const toMemory = Math.random() < 0.6;
+        transferDots.push(new TransferDot(devIndex, toMemory));
+      }
+    }
+
+    function animateSharing() {
+      const rect = sharingCanvas.getBoundingClientRect();
+      sCtx.clearRect(0, 0, rect.width, rect.height);
+
+      sTime++;
+      spawnDots();
+
+      // Layer 1: Pipes
+      for (let i = 0; i < 4; i++) {
+        drawLoopPipe(rect, i);
+      }
+      drawMemoryPipe(rect);
+
+      // Layer 2: Dots
+      for (let i = 0; i < 4; i++) {
+        loopDots[i] = loopDots[i].filter(dot => {
+          const alive = dot.update();
+          if (alive) dot.draw(rect);
+          return alive;
+        });
+      }
+      memoryDots = memoryDots.filter(dot => {
+        const alive = dot.update();
+        if (alive) dot.draw(rect);
+        return alive;
+      });
+      transferDots = transferDots.filter(dot => {
+        const alive = dot.update();
+        if (alive) dot.draw(rect);
+        return alive;
+      });
+
+      // Layer 3: Nodes
+      drawNodes(rect);
+
+      requestAnimationFrame(animateSharing);
+    }
+
+    setTimeout(() => {
+      animateSharing();
+    }, 3000);
+  </script>
+</body>
+
+</html>
