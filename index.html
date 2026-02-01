@@ -409,7 +409,7 @@
     }
 
     .install-command {
-      background: rgba(255, 255, 255, 0.03);
+      background: rgba(255, 255, 255, 0.06);
       border: none;
       border-radius: 12px;
       padding: 32px 48px;
@@ -502,12 +502,45 @@
     .benefit-block {
       text-align: center;
       padding: 24px 16px;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    .benefit-block.visible {
+      animation: fadeSlideUp 0.6s ease-out forwards;
+    }
+
+    .benefit-block:nth-child(2).visible {
+      animation-delay: 0.15s;
+    }
+
+    .benefit-block:nth-child(3).visible {
+      animation-delay: 0.3s;
+    }
+
+    @keyframes fadeSlideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     .benefit-icon {
-      font-size: 32px;
       margin-bottom: 16px;
-      opacity: 0.9;
+      opacity: 0.7;
+    }
+
+    .benefit-icon svg {
+      width: 28px;
+      height: 28px;
+      stroke: var(--text-primary);
+      stroke-width: 1.5;
+      fill: none;
     }
 
     .benefit-title {
@@ -522,30 +555,7 @@
       font-size: 13px;
       color: var(--text-secondary);
       line-height: 1.6;
-    }
-
-    /* Typewriter effect */
-    .typewriter-cursor {
-      display: inline-block;
-      width: 2px;
-      height: 1em;
-      background: var(--text-primary);
-      margin-left: 2px;
-      animation: blink 0.7s infinite;
-      vertical-align: text-bottom;
-    }
-
-    @keyframes blink {
-
-      0%,
-      50% {
-        opacity: 1;
-      }
-
-      51%,
-      100% {
-        opacity: 0;
-      }
+      min-height: 60px;
     }
 
     @media (max-width: 700px) {
@@ -909,17 +919,35 @@
     <section class="benefits-section">
       <div class="benefits-grid">
         <div class="benefit-block">
-          <div class="benefit-icon">⚡</div>
+          <div class="benefit-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+              fill="none">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" />
+            </svg>
+          </div>
           <h4 class="benefit-title">Zero Context Bloat</h4>
           <p class="benefit-desc">Skills are injected precisely when needed, not preloaded into every prompt.</p>
         </div>
         <div class="benefit-block">
-          <div class="benefit-icon">🔄</div>
+          <div class="benefit-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+              fill="none">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+            </svg>
+          </div>
           <h4 class="benefit-title">Evolutionary Ranking</h4>
           <p class="benefit-desc">The best skills rise to the top through continuous community validation.</p>
         </div>
         <div class="benefit-block">
-          <div class="benefit-icon">🌐</div>
+          <div class="benefit-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+              fill="none">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M12 21a9.004 9.004 0 0 0 8.716-6.747M12 21a9.004 9.004 0 0 1-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 0 1 7.843 4.582M12 3a8.997 8.997 0 0 0-7.843 4.582m15.686 0A11.953 11.953 0 0 1 12 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0 1 21 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0 1 12 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 0 1 3 12c0-1.605.42-3.113 1.157-4.418" />
+            </svg>
+          </div>
           <h4 class="benefit-title">Shared Memory</h4>
           <p class="benefit-desc">Every agent contributes to a collective intelligence that benefits all developers.</p>
         </div>
@@ -971,47 +999,77 @@
 
     // 4 IDE target X positions (aligned to logo centers - 100px logos, 70px gap)
     const IDE_POSITIONS = [0.12, 0.37, 0.63, 0.88];
+    const CORNER_RADIUS = 35;
 
-    // A dot that travels along rigid pipe paths
+    // A dot that travels along pipe paths with rounded corners
     class PipeDot {
       constructor(targetIndex) {
         this.targetIndex = targetIndex;
         this.progress = 0;
-        this.speed = 0.015 + Math.random() * 0.01; // Faster
+        this.speed = 0.012 + Math.random() * 0.008;
         this.size = 2;
-        this.baseAlpha = 0.6;
       }
 
-      // Rigid L-shaped path: down trunk → horizontal → down to IDE
+      // Get position along curved pipe path
       getPosition(rect) {
         const centerX = rect.width / 2;
         const targetX = rect.width * IDE_POSITIONS[this.targetIndex];
         const branchY = rect.height * BRANCH_Y;
         const endY = rect.height * END_Y;
-
-        // Calculate path segments
+        const r = CORNER_RADIUS;
+        const dir = targetX > centerX ? 1 : -1;
         const horizontalDist = Math.abs(targetX - centerX);
-        const trunkLength = branchY;
-        const dropLength = endY - branchY;
-        const totalPath = trunkLength + horizontalDist + dropLength;
+
+        // Path segments: straight down | corner1 arc | horizontal | corner2 arc | straight down
+        const seg1 = branchY - r;                    // straight down to first corner
+        const seg2 = (Math.PI / 2) * r;              // first corner arc (quarter circle)
+        const seg3 = horizontalDist - 2 * r;         // horizontal straight
+        const seg4 = (Math.PI / 2) * r;              // second corner arc
+        const seg5 = endY - branchY - r;             // straight down to end
+        const totalPath = seg1 + seg2 + seg3 + seg4 + seg5;
 
         // Normalized segment boundaries
-        const seg1End = trunkLength / totalPath;
-        const seg2End = (trunkLength + horizontalDist) / totalPath;
+        const p1 = seg1 / totalPath;
+        const p2 = (seg1 + seg2) / totalPath;
+        const p3 = (seg1 + seg2 + seg3) / totalPath;
+        const p4 = (seg1 + seg2 + seg3 + seg4) / totalPath;
 
-        if (this.progress < seg1End) {
-          // Segment 1: Down the trunk
-          const t = this.progress / seg1End;
-          return { x: centerX, y: t * branchY };
-        } else if (this.progress < seg2End) {
-          // Segment 2: Horizontal to target column
-          const t = (this.progress - seg1End) / (seg2End - seg1End);
-          const dir = targetX > centerX ? 1 : -1;
-          return { x: centerX + dir * t * horizontalDist, y: branchY };
+        const p = this.progress;
+
+        if (p < p1) {
+          // Segment 1: Straight down
+          const t = p / p1;
+          return { x: centerX, y: t * (branchY - r) };
+        } else if (p < p2) {
+          // Segment 2: First corner arc
+          const t = (p - p1) / (p2 - p1);
+          const angle = Math.PI + (t * Math.PI / 2) * dir;
+          const cornerCenterX = centerX + dir * r;
+          const cornerCenterY = branchY - r;
+          return {
+            x: cornerCenterX + Math.cos(angle) * r * -dir,
+            y: cornerCenterY + r + Math.sin(angle) * r * -1
+          };
+        } else if (p < p3) {
+          // Segment 3: Horizontal
+          const t = (p - p2) / (p3 - p2);
+          const startX = centerX + dir * r;
+          const endHorizX = targetX - dir * r;
+          return { x: startX + t * (endHorizX - startX), y: branchY };
+        } else if (p < p4) {
+          // Segment 4: Second corner arc
+          const t = (p - p3) / (p4 - p3);
+          const angle = (dir > 0 ? Math.PI : 0) - (t * Math.PI / 2) * dir;
+          const cornerCenterX = targetX - dir * r;
+          const cornerCenterY = branchY + r;
+          return {
+            x: cornerCenterX + Math.cos(angle) * r,
+            y: cornerCenterY + Math.sin(angle) * r
+          };
         } else {
-          // Segment 3: Down to IDE
-          const t = (this.progress - seg2End) / (1 - seg2End);
-          return { x: targetX, y: branchY + t * dropLength };
+          // Segment 5: Straight down to end
+          const t = (p - p4) / (1 - p4);
+          return { x: targetX, y: branchY + r + t * (endY - branchY - r) };
         }
       }
 
@@ -1022,13 +1080,11 @@
 
       draw(rect) {
         const pos = this.getPosition(rect);
-        // Progressive shine - gets brighter and slightly larger near logos
         const progressCubed = this.progress * this.progress * this.progress;
         const alpha = 0.6 + (progressCubed * 0.4);
         const size = this.size + (progressCubed * 2);
         const blur = 3 + (progressCubed * 12);
 
-        // Shiny blurry dot effect
         ctx.save();
         ctx.shadowColor = 'rgba(255, 255, 255, 0.9)';
         ctx.shadowBlur = blur;
@@ -1599,55 +1655,17 @@
     });
 
     // ==========================================
-    // TYPEWRITER EFFECT FOR BENEFITS
+    // SCROLL-TRIGGERED FADE IN FOR BENEFITS
     // ==========================================
-    function typeWriter(element, text, speed = 30) {
-      element.textContent = '';
-      const cursor = document.createElement('span');
-      cursor.className = 'typewriter-cursor';
-      element.appendChild(cursor);
-
-      let i = 0;
-      function type() {
-        if (i < text.length) {
-          element.insertBefore(document.createTextNode(text.charAt(i)), cursor);
-          i++;
-          setTimeout(type, speed);
-        } else {
-          // Remove cursor after typing completes
-          setTimeout(() => cursor.remove(), 500);
-        }
-      }
-      type();
-    }
-
-    function animateBenefitBlock(block, delay = 0) {
-      const title = block.querySelector('.benefit-title');
-      const desc = block.querySelector('.benefit-desc');
-      const titleText = title.textContent;
-      const descText = desc.textContent;
-
-      // Clear content initially
-      title.textContent = '';
-      desc.textContent = '';
-
-      setTimeout(() => {
-        typeWriter(title, titleText, 40);
-        setTimeout(() => {
-          typeWriter(desc, descText, 20);
-        }, titleText.length * 40 + 200);
-      }, delay);
-    }
-
     const observerOptions = {
-      threshold: 0.3,
-      rootMargin: '0px 0px -50px 0px'
+      threshold: 0.2,
+      rootMargin: '0px 0px -30px 0px'
     };
 
     const benefitObserver = new IntersectionObserver((entries) => {
-      entries.forEach((entry, index) => {
+      entries.forEach((entry) => {
         if (entry.isIntersecting) {
-          animateBenefitBlock(entry.target, index * 400);
+          entry.target.classList.add('visible');
           benefitObserver.unobserve(entry.target);
         }
       });
