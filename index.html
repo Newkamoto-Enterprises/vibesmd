@@ -182,7 +182,7 @@
     .ide-row img {
       position: relative;
       z-index: 2;
-      height: 80px;
+      height: 100px;
       width: auto;
       filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 1));
     }
@@ -190,13 +190,13 @@
     .ide-logos {
       display: flex;
       justify-content: center;
-      gap: 50px;
+      gap: 70px;
       position: relative;
       z-index: 2;
     }
 
     .ide-logos img {
-      height: 80px;
+      height: 100px;
       width: auto;
       filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 1));
     }
@@ -906,8 +906,8 @@
     const BRANCH_Y = 0.15;  // Shorter trunk
     const END_Y = 0.85;     // Barely touches top of logos
 
-    // 4 IDE target X positions (aligned to logo centers)
-    const IDE_POSITIONS = [0.15, 0.38, 0.62, 0.85];
+    // 4 IDE target X positions (aligned to logo centers - 100px logos, 70px gap)
+    const IDE_POSITIONS = [0.12, 0.37, 0.63, 0.88];
 
     // A dot that travels along rigid pipe paths
     class PipeDot {
@@ -982,7 +982,7 @@
       const centerX = rect.width / 2;
       const branchY = rect.height * BRANCH_Y;
       const endY = rect.height * END_Y;
-      const r = 10; // corner radius
+      const r = 20; // corner radius - more rounded
 
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.18)';
       ctx.lineWidth = 3;
