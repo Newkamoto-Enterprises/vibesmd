@@ -390,7 +390,7 @@
 
     .install-command {
       background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.12);
+      border: none;
       border-radius: 12px;
       padding: 32px 48px;
       display: inline-flex;
@@ -416,6 +416,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      position: relative;
     }
 
     .copy-btn:hover {
@@ -433,8 +434,26 @@
       stroke: var(--text-primary);
     }
 
-    .copy-btn.copied svg {
-      stroke: #4ade80;
+    .copy-tooltip {
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 255, 255, 0.95);
+      color: #000;
+      font-size: 11px;
+      font-weight: 500;
+      padding: 6px 12px;
+      border-radius: 6px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+      margin-bottom: 8px;
+    }
+
+    .copy-btn.copied .copy-tooltip {
+      opacity: 1;
     }
 
     .install-hint {
@@ -833,6 +852,7 @@
       <div class="install-command">
         <code id="install-code">pip install newgraph-client</code>
         <button class="copy-btn" id="copy-btn" title="Copy to clipboard">
+          <span class="copy-tooltip">Copied!</span>
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
             stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round"
