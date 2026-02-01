@@ -188,17 +188,37 @@
     }
 
     .ide-logos {
-      display: flex;
-      justify-content: center;
-      gap: 70px;
       position: relative;
+      width: 800px;
+      height: 100px;
+      margin: 0 auto;
       z-index: 2;
     }
 
     .ide-logos img {
+      position: absolute;
       height: 100px;
       width: auto;
+      top: 0;
+      transform: translateX(-50%);
       filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 1));
+    }
+
+    /* Position each logo to match IDE_POSITIONS: [0.12, 0.37, 0.63, 0.88] */
+    .ide-logos img:nth-child(1) {
+      left: 12%;
+    }
+
+    .ide-logos img:nth-child(2) {
+      left: 37%;
+    }
+
+    .ide-logos img:nth-child(3) {
+      left: 63%;
+    }
+
+    .ide-logos img:nth-child(4) {
+      left: 88%;
     }
 
     /* Energy Beam behind IDEs */
@@ -496,33 +516,35 @@
       color: var(--text-primary);
       margin-bottom: 8px;
       letter-spacing: 0.02em;
-      opacity: 0;
     }
 
     .benefit-desc {
       font-size: 13px;
       color: var(--text-secondary);
       line-height: 1.6;
-      opacity: 0;
     }
 
-    .benefit-block.visible .benefit-title {
-      animation: typeReveal 0.6s ease-out forwards;
+    /* Typewriter effect */
+    .typewriter-cursor {
+      display: inline-block;
+      width: 2px;
+      height: 1em;
+      background: var(--text-primary);
+      margin-left: 2px;
+      animation: blink 0.7s infinite;
+      vertical-align: text-bottom;
     }
 
-    .benefit-block.visible .benefit-desc {
-      animation: typeReveal 0.8s ease-out 0.3s forwards;
-    }
+    @keyframes blink {
 
-    @keyframes typeReveal {
-      from {
-        opacity: 0;
-        transform: translateY(10px);
+      0%,
+      50% {
+        opacity: 1;
       }
 
-      to {
-        opacity: 1;
-        transform: translateY(0);
+      51%,
+      100% {
+        opacity: 0;
       }
     }
 
@@ -1577,8 +1599,46 @@
     });
 
     // ==========================================
-    // SCROLL-TRIGGERED ANIMATIONS
+    // TYPEWRITER EFFECT FOR BENEFITS
     // ==========================================
+    function typeWriter(element, text, speed = 30) {
+      element.textContent = '';
+      const cursor = document.createElement('span');
+      cursor.className = 'typewriter-cursor';
+      element.appendChild(cursor);
+
+      let i = 0;
+      function type() {
+        if (i < text.length) {
+          element.insertBefore(document.createTextNode(text.charAt(i)), cursor);
+          i++;
+          setTimeout(type, speed);
+        } else {
+          // Remove cursor after typing completes
+          setTimeout(() => cursor.remove(), 500);
+        }
+      }
+      type();
+    }
+
+    function animateBenefitBlock(block, delay = 0) {
+      const title = block.querySelector('.benefit-title');
+      const desc = block.querySelector('.benefit-desc');
+      const titleText = title.textContent;
+      const descText = desc.textContent;
+
+      // Clear content initially
+      title.textContent = '';
+      desc.textContent = '';
+
+      setTimeout(() => {
+        typeWriter(title, titleText, 40);
+        setTimeout(() => {
+          typeWriter(desc, descText, 20);
+        }, titleText.length * 40 + 200);
+      }, delay);
+    }
+
     const observerOptions = {
       threshold: 0.3,
       rootMargin: '0px 0px -50px 0px'
@@ -1587,10 +1647,7 @@
     const benefitObserver = new IntersectionObserver((entries) => {
       entries.forEach((entry, index) => {
         if (entry.isIntersecting) {
-          // Stagger the animations
-          setTimeout(() => {
-            entry.target.classList.add('visible');
-          }, index * 150);
+          animateBenefitBlock(entry.target, index * 400);
           benefitObserver.unobserve(entry.target);
         }
       });
