@@ -496,13 +496,34 @@
       color: var(--text-primary);
       margin-bottom: 8px;
       letter-spacing: 0.02em;
+      opacity: 0;
     }
 
     .benefit-desc {
       font-size: 13px;
       color: var(--text-secondary);
       line-height: 1.6;
-      opacity: 0.8;
+      opacity: 0;
+    }
+
+    .benefit-block.visible .benefit-title {
+      animation: typeReveal 0.6s ease-out forwards;
+    }
+
+    .benefit-block.visible .benefit-desc {
+      animation: typeReveal 0.8s ease-out 0.3s forwards;
+    }
+
+    @keyframes typeReveal {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     @media (max-width: 700px) {
@@ -1002,7 +1023,7 @@
       const centerX = rect.width / 2;
       const branchY = rect.height * BRANCH_Y;
       const endY = rect.height * END_Y;
-      const r = 20; // corner radius - more rounded
+      const r = 35; // corner radius - more rounded
 
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.18)';
       ctx.lineWidth = 3;
@@ -1553,6 +1574,30 @@
       } catch (err) {
         console.error('Copy failed:', err);
       }
+    });
+
+    // ==========================================
+    // SCROLL-TRIGGERED ANIMATIONS
+    // ==========================================
+    const observerOptions = {
+      threshold: 0.3,
+      rootMargin: '0px 0px -50px 0px'
+    };
+
+    const benefitObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry, index) => {
+        if (entry.isIntersecting) {
+          // Stagger the animations
+          setTimeout(() => {
+            entry.target.classList.add('visible');
+          }, index * 150);
+          benefitObserver.unobserve(entry.target);
+        }
+      });
+    }, observerOptions);
+
+    document.querySelectorAll('.benefit-block').forEach(block => {
+      benefitObserver.observe(block);
     });
   </script>
 </body>
