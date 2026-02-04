@@ -143,9 +143,9 @@
     }
 
     /* ==========================================
-       PIPE CANVAS
+       PIPE SVG - Train Track Animation
        ========================================== */
-    #pipe-canvas {
+    #pipe-svg {
       position: absolute;
       top: 90px;
       left: 50%;
@@ -154,6 +154,19 @@
       max-width: 800px;
       height: 180px;
       z-index: 0;
+      overflow: visible;
+    }
+
+    .pipe-path {
+      fill: none;
+      stroke: #333333;
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .train-dot {
+      fill: #ffffff;
     }
 
     /* ==========================================
@@ -375,12 +388,27 @@
       box-sizing: border-box;
     }
 
-    #sharing-canvas {
+    #sharing-svg {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
+      overflow: visible;
+    }
+
+    .sharing-pipe {
+      fill: none;
+      stroke: #333333;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .node-circle {
+      fill: #000000;
+      stroke: rgba(255, 255, 255, 0.2);
+      stroke-width: 2;
     }
 
     .sharing-explanation {
@@ -575,6 +603,24 @@
       z-index: 100;
       opacity: 0;
       animation: fadeIn 0.8s ease-out 0.8s forwards;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .header-link {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      text-decoration: none;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      transition: color 0.2s;
+    }
+
+    .header-link:hover {
+      color: var(--text-primary);
     }
 
     .cta-button {
@@ -816,6 +862,7 @@
 
 <body>
   <div class="header-cta">
+    <a href="about.html" class="header-link">About</a>
     <a href="#" class="cta-button" id="open-waitlist">Join the Waitlist</a>
   </div>
 
@@ -881,15 +928,28 @@
         <p class="tagline">Skills Graph for Agentic Coding</p>
       </div>
 
-      <canvas id="pipe-canvas"></canvas>
+      <svg id="pipe-svg" viewBox="0 0 800 180" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <filter id="dotGlow" x="-100%" y="-100%" width="300%" height="300%">
+            <feGaussianBlur stdDeviation="4" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+        <g id="pipe-paths"></g>
+        <g id="pipe-dots"></g>
+      </svg>
 
       <div class="ide-row">
         <div class="energy-beam"></div>
         <div class="ide-logos">
           <img src="logos/image 5.png" alt="Claude Code">
           <img src="logos/image 4.png" alt="Cursor">
-          <img src="logos/image 1.png" alt="Aurora">
+          <img src="logos/image 1.png" alt="Cline">
           <img src="logos/image 3.png" alt="Windsurf">
+          <img src="logos/openclaw.png" alt="OpenClaw">
         </div>
       </div>
     </section>
@@ -957,7 +1017,20 @@
     <section class="skill-sharing">
       <h3>Discover once, benefit everyone</h3>
       <div class="sharing-diagram">
-        <canvas id="sharing-canvas"></canvas>
+        <svg id="sharing-svg">
+          <defs>
+            <filter id="shareDotGlow" x="-100%" y="-100%" width="300%" height="300%">
+              <feGaussianBlur stdDeviation="3" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
+          <g id="sharing-pipes"></g>
+          <g id="sharing-dots"></g>
+          <g id="sharing-nodes"></g>
+        </svg>
       </div>
       <div class="sharing-explanation">
         <p>Each agent contributes discoveries to a shared epistemic memory. When one developer's agent learns a new
@@ -973,595 +1046,374 @@
 
   <script>
     // ==========================================
-    // TERMINAL PIPE ANIMATION
-    // Dots flow along fixed paths like unix pipes
+    // SVG PIPE ANIMATION - Perfect Path Following
+    // Uses getPointAtLength() for exact positions
     // ==========================================
-    const canvas = document.getElementById('pipe-canvas');
-    const ctx = canvas.getContext('2d');
-    let animationId;
-    let dots = [];
 
-    // Retina scaling
-    function resizeCanvas() {
-      const rect = canvas.getBoundingClientRect();
-      const dpr = window.devicePixelRatio || 1;
-      canvas.width = rect.width * dpr;
-      canvas.height = rect.height * dpr;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    }
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
+    const pipeSvg = document.getElementById('pipe-svg');
+    const pipePathsGroup = document.getElementById('pipe-paths');
+    const pipeDotsGroup = document.getElementById('pipe-dots');
 
-    // Path definitions (normalized 0-1 coordinates)
-    // Rigid right-angle pipes: down → horizontal → down
-    const BRANCH_Y = 0.15;  // Shorter trunk
-    const END_Y = 0.85;     // Barely touches top of logos
-
-    // 4 IDE target X positions (aligned to logo centers - 100px logos, 70px gap)
-    const IDE_POSITIONS = [0.12, 0.37, 0.63, 0.88];
+    // Layout constants
+    const VIEWBOX_WIDTH = 800;
+    const VIEWBOX_HEIGHT = 180;
+    const BRANCH_Y = VIEWBOX_HEIGHT * 0.15;
+    const END_Y = VIEWBOX_HEIGHT * 0.85;
+    const CENTER_X = VIEWBOX_WIDTH / 2;
+    const IDE_POSITIONS = [0.10, 0.30, 0.50, 0.70, 0.90]; // 5 logos evenly spaced
     const CORNER_RADIUS = 35;
 
-    // A dot that travels along pipe paths with rounded corners
-    class PipeDot {
-      constructor(targetIndex) {
-        this.targetIndex = targetIndex;
-        this.progress = 0;
-        this.speed = 0.012 + Math.random() * 0.008;
-        this.size = 2;
+    // Create SVG path element for each pipe
+    function generatePipePath(targetIndex) {
+      const targetX = VIEWBOX_WIDTH * IDE_POSITIONS[targetIndex];
+      const dir = targetX > CENTER_X ? 1 : -1;
+      const r = CORNER_RADIUS;
+
+      // Build path: down → corner → horizontal → corner → down
+      const pathData = `
+        M ${CENTER_X} 0
+        L ${CENTER_X} ${BRANCH_Y - r}
+        Q ${CENTER_X} ${BRANCH_Y} ${CENTER_X + dir * r} ${BRANCH_Y}
+        L ${targetX - dir * r} ${BRANCH_Y}
+        Q ${targetX} ${BRANCH_Y} ${targetX} ${BRANCH_Y + r}
+        L ${targetX} ${END_Y}
+      `.replace(/\s+/g, ' ').trim();
+
+      return pathData;
+    }
+
+    // Initialize static pipe paths
+    const pipePaths = [];
+    for (let i = 0; i < 5; i++) {
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', generatePipePath(i));
+      path.classList.add('pipe-path');
+      pipePathsGroup.appendChild(path);
+      pipePaths.push(path);
+    }
+
+    // Junction dot at branch point - hidden
+    // (removed visible junction dot to avoid stray dot issue)
+
+    // Train Dot class - uses getPointAtLength for perfect path following
+    class TrainDot {
+      constructor(pathElement) {
+        this.path = pathElement;
+        this.pathLength = pathElement.getTotalLength();
+        this.distance = 0;
+        this.speed = 4 + Math.random() * 2; // pixels per frame (fast flow)
+        this.baseSize = 2.5;
+        this.element = this.createDotElement();
+        // Set initial position to avoid appearing at (0,0)
+        const startPoint = this.path.getPointAtLength(0);
+        this.element.setAttribute('cx', startPoint.x);
+        this.element.setAttribute('cy', startPoint.y);
+        pipeDotsGroup.appendChild(this.element);
       }
 
-      // Get position along curved pipe path
-      getPosition(rect) {
-        const centerX = rect.width / 2;
-        const targetX = rect.width * IDE_POSITIONS[this.targetIndex];
-        const branchY = rect.height * BRANCH_Y;
-        const endY = rect.height * END_Y;
-        const r = CORNER_RADIUS;
-        const dir = targetX > centerX ? 1 : -1;
-        const horizontalDist = Math.abs(targetX - centerX);
-
-        // Path segments: straight down | corner1 arc | horizontal | corner2 arc | straight down
-        const seg1 = branchY - r;                    // straight down to first corner
-        const seg2 = (Math.PI / 2) * r;              // first corner arc (quarter circle)
-        const seg3 = horizontalDist - 2 * r;         // horizontal straight
-        const seg4 = (Math.PI / 2) * r;              // second corner arc
-        const seg5 = endY - branchY - r;             // straight down to end
-        const totalPath = seg1 + seg2 + seg3 + seg4 + seg5;
-
-        // Normalized segment boundaries
-        const p1 = seg1 / totalPath;
-        const p2 = (seg1 + seg2) / totalPath;
-        const p3 = (seg1 + seg2 + seg3) / totalPath;
-        const p4 = (seg1 + seg2 + seg3 + seg4) / totalPath;
-
-        const p = this.progress;
-
-        if (p < p1) {
-          // Segment 1: Straight down
-          const t = p / p1;
-          return { x: centerX, y: t * (branchY - r) };
-        } else if (p < p2) {
-          // Segment 2: First corner arc
-          const t = (p - p1) / (p2 - p1);
-          const angle = Math.PI + (t * Math.PI / 2) * dir;
-          const cornerCenterX = centerX + dir * r;
-          const cornerCenterY = branchY - r;
-          return {
-            x: cornerCenterX + Math.cos(angle) * r * -dir,
-            y: cornerCenterY + r + Math.sin(angle) * r * -1
-          };
-        } else if (p < p3) {
-          // Segment 3: Horizontal
-          const t = (p - p2) / (p3 - p2);
-          const startX = centerX + dir * r;
-          const endHorizX = targetX - dir * r;
-          return { x: startX + t * (endHorizX - startX), y: branchY };
-        } else if (p < p4) {
-          // Segment 4: Second corner arc
-          const t = (p - p3) / (p4 - p3);
-          const angle = (dir > 0 ? Math.PI : 0) - (t * Math.PI / 2) * dir;
-          const cornerCenterX = targetX - dir * r;
-          const cornerCenterY = branchY + r;
-          return {
-            x: cornerCenterX + Math.cos(angle) * r,
-            y: cornerCenterY + Math.sin(angle) * r
-          };
-        } else {
-          // Segment 5: Straight down to end
-          const t = (p - p4) / (1 - p4);
-          return { x: targetX, y: branchY + r + t * (endY - branchY - r) };
-        }
+      createDotElement() {
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('r', this.baseSize);
+        circle.classList.add('train-dot');
+        circle.setAttribute('filter', 'url(#dotGlow)');
+        return circle;
       }
 
       update() {
-        this.progress += this.speed;
-        return this.progress < 1;
-      }
+        this.distance += this.speed;
 
-      draw(rect) {
-        const pos = this.getPosition(rect);
-        const progressCubed = this.progress * this.progress * this.progress;
-        const alpha = 0.6 + (progressCubed * 0.4);
-        const size = this.size + (progressCubed * 2);
-        const blur = 3 + (progressCubed * 12);
-
-        ctx.save();
-        ctx.shadowColor = 'rgba(255, 255, 255, 0.9)';
-        ctx.shadowBlur = blur;
-        ctx.beginPath();
-        ctx.arc(pos.x, pos.y, size, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
-        ctx.fill();
-        ctx.restore();
-      }
-    }
-
-    // Draw pipe structure with rounded corners using quadratic curves
-    function drawPipes(rect) {
-      const centerX = rect.width / 2;
-      const branchY = rect.height * BRANCH_Y;
-      const endY = rect.height * END_Y;
-      const r = 35; // corner radius - more rounded
-
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.18)';
-      ctx.lineWidth = 3;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-
-      // Draw each pipe from center to IDE
-      for (let i = 0; i < 4; i++) {
-        const targetX = rect.width * IDE_POSITIONS[i];
-
-        ctx.beginPath();
-        // Start from top center
-        ctx.moveTo(centerX, 0);
-        // Down to just before the corner
-        ctx.lineTo(centerX, branchY - r);
-        // Rounded corner using quadratic curve
-        ctx.quadraticCurveTo(centerX, branchY, centerX + (targetX > centerX ? r : -r), branchY);
-        // Horizontal to just before the drop
-        ctx.lineTo(targetX + (targetX > centerX ? -r : r), branchY);
-        // Second rounded corner
-        ctx.quadraticCurveTo(targetX, branchY, targetX, branchY + r);
-        // Down to the end
-        ctx.lineTo(targetX, endY);
-        ctx.stroke();
-      }
-
-      // Junction dot at center
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-      ctx.beginPath();
-      ctx.arc(centerX, branchY, 4, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    // Spawn dots - waterfall effect
-    function spawnDot() {
-      if (dots.length < 80) {
-        const targetIndex = Math.floor(Math.random() * 4);
-        dots.push(new PipeDot(targetIndex));
-      }
-    }
-
-    // Main animation loop
-    function animate() {
-      const rect = canvas.getBoundingClientRect();
-      ctx.clearRect(0, 0, rect.width, rect.height);
-
-      // Draw static pipes first
-      drawPipes(rect);
-
-      // Update and draw dots
-      dots = dots.filter(dot => {
-        const alive = dot.update();
-        if (alive) {
-          dot.draw(rect);
+        if (this.distance >= this.pathLength) {
+          this.element.remove();
+          return false;
         }
-        return alive;
-      });
 
-      animationId = requestAnimationFrame(animate);
+        // Get EXACT position on path - browser calculates perfect coords
+        const point = this.path.getPointAtLength(this.distance);
+        this.element.setAttribute('cx', point.x);
+        this.element.setAttribute('cy', point.y);
+
+        // Progressive shine effect - gets brighter near end
+        const progress = this.distance / this.pathLength;
+        const progressCubed = progress * progress * progress;
+        const opacity = 0.6 + (progressCubed * 0.4);
+        const size = this.baseSize + (progressCubed * 2);
+
+        this.element.setAttribute('r', size);
+        this.element.setAttribute('fill', `rgba(255, 255, 255, ${opacity})`);
+
+        return true;
+      }
     }
 
-    // Start after delay
+    // Active dots for hero animation
+    let heroTrainDots = [];
+
+    function spawnHeroDot() {
+      if (heroTrainDots.length < 80) {
+        const pathIndex = Math.floor(Math.random() * 4);
+        heroTrainDots.push(new TrainDot(pipePaths[pathIndex]));
+      }
+    }
+
+    let heroAnimationId;
+    function animateHero() {
+      heroTrainDots = heroTrainDots.filter(dot => dot.update());
+      heroAnimationId = requestAnimationFrame(animateHero);
+    }
+
+    // Start hero animation after delay
     setTimeout(() => {
-      animate();
-      // Spawn dots very frequently for dense waterfall effect
-      setInterval(spawnDot, 35);
+      animateHero();
+      setInterval(spawnHeroDot, 35);
     }, 600);
 
     // Visibility handling
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) {
-        cancelAnimationFrame(animationId);
+        cancelAnimationFrame(heroAnimationId);
       } else {
-        animate();
+        animateHero();
       }
     });
 
     // ==========================================
-    // SKILL SHARING DIAGRAM - PULLEY SYSTEM
+    // SKILL SHARING DIAGRAM - SVG Pulley System
     // ==========================================
-    const sharingCanvas = document.getElementById('sharing-canvas');
-    const sCtx = sharingCanvas.getContext('2d');
-    let sTime = 0;
 
-    // Load IDE logos
-    const ideLogos = [
-      { src: 'logos/image 5.png', img: new Image() },
-      { src: 'logos/image 4.png', img: new Image() },
-      { src: 'logos/image 1.png', img: new Image() },
-      { src: 'logos/image 3.png', img: new Image() },
-    ];
-    ideLogos.forEach(logo => logo.img.src = logo.src);
+    const sharingSvg = document.getElementById('sharing-svg');
+    const sharingPipesGroup = document.getElementById('sharing-pipes');
+    const sharingDotsGroup = document.getElementById('sharing-dots');
+    const sharingNodesGroup = document.getElementById('sharing-nodes');
 
-    function resizeSharingCanvas() {
-      const rect = sharingCanvas.getBoundingClientRect();
-      const dpr = window.devicePixelRatio || 1;
-      sharingCanvas.width = rect.width * dpr;
-      sharingCanvas.height = rect.height * dpr;
-      sCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    }
-    resizeSharingCanvas();
-    window.addEventListener('resize', resizeSharingCanvas);
-
-    // Layout constants - with padding
-    const PADDING = 60;
-    const DEV_X = [0.15, 0.38, 0.62, 0.85];
-    const IDE_Y = 0.20;
-    const DEV_Y = 0.48;
-    const LOOP_WIDTH = 80;
+    // Layout constants for sharing diagram
+    const DEV_X_POSITIONS = [0.10, 0.30, 0.50, 0.70, 0.90]; // 5 nodes evenly spaced
+    const IDE_NODE_Y = 0.20;
+    const DEV_NODE_Y = 0.48;
+    const LOOP_HALF_WIDTH = 55; // wider pulley for better proportion
     const MEMORY_CY = 0.85;
-    const MEMORY_WIDTH = 0.70;
-    const MEMORY_HEIGHT = 30;
-    const MEMORY_RADIUS = 15;
+    const MEMORY_WIDTH_RATIO = 0.70;
+    const MEMORY_RADIUS = 35; // thicker stadium with more internal padding
+    const IDE_CIRCLE_RADIUS = 35;
+    const DEV_CIRCLE_RADIUS = 28;
 
-    // Circle sizes
-    const IDE_RADIUS = 35;
-    const DEV_RADIUS = 28;
+    const ideLogoSrcs = [
+      'logos/image 5.png',
+      'logos/image 4.png',
+      'logos/image 1.png',
+      'logos/image 3.png',
+      'logos/openclaw.png'
+    ];
 
-    // Active dots
-    let loopDots = [[], [], [], []];
-    let memoryDots = [];
-    let transferDots = [];
+    // Store path elements for animation
+    const loopPaths = [];
+    const transferPaths = [];
+    let memoryPath = null;
 
-    // Simple dot - no glow, just solid
-    class LoopDot {
-      constructor(devIndex) {
-        this.devIndex = devIndex;
-        this.progress = 0;
-        this.speed = 0.004 + Math.random() * 0.003;
-        this.size = 3;
-      }
+    function initSharingDiagram() {
+      const rect = sharingSvg.getBoundingClientRect();
+      const w = rect.width || 1100;
+      const h = rect.height || 420;
 
-      getPosition(rect) {
-        const w = rect.width;
-        const h = rect.height;
-        const cx = w * DEV_X[this.devIndex];
-        const ideY = h * IDE_Y;
-        const devY = h * DEV_Y;
-        const halfW = LOOP_WIDTH / 2;
+      // Update viewBox based on container size
+      sharingSvg.setAttribute('viewBox', `0 0 ${w} ${h}`);
 
-        // Path segments: left-down, DEV-arc, right-up, IDE-arc
-        const verticalLen = devY - ideY;
-        const arcLen = Math.PI * halfW;  // semicircle
-        const total = verticalLen + arcLen + verticalLen + arcLen;
+      // Clear existing paths
+      sharingPipesGroup.innerHTML = '';
+      sharingDotsGroup.innerHTML = '';
+      sharingNodesGroup.innerHTML = '';
+      loopPaths.length = 0;
+      transferPaths.length = 0;
 
-        const s1 = verticalLen / total;
-        const s2 = (verticalLen + arcLen) / total;
-        const s3 = (verticalLen + arcLen + verticalLen) / total;
+      // Create pulley loops for each IDE-DEV pair
+      DEV_X_POSITIONS.forEach((xRatio, i) => {
+        const cx = w * xRatio;
+        const ideY = h * IDE_NODE_Y;
+        const devY = h * DEV_NODE_Y;
+        const hw = LOOP_HALF_WIDTH;
 
-        if (this.progress < s1) {
-          // Left side going down
-          const t = this.progress / s1;
-          return { x: cx - halfW, y: ideY + t * verticalLen };
-        } else if (this.progress < s2) {
-          // Bottom semicircle around DEV (left to right)
-          const t = (this.progress - s1) / (s2 - s1);
-          const angle = Math.PI - t * Math.PI;  // π to 0
-          return { x: cx + Math.cos(angle) * halfW, y: devY - Math.sin(angle) * halfW };
-        } else if (this.progress < s3) {
-          // Right side going up
-          const t = (this.progress - s2) / (s3 - s2);
-          return { x: cx + halfW, y: devY - t * verticalLen };
-        } else {
-          // Top semicircle around IDE (right to left)
-          const t = (this.progress - s3) / (1 - s3);
-          const angle = -t * Math.PI;  // 0 to -π
-          return { x: cx + Math.cos(angle) * halfW, y: ideY - Math.sin(angle) * halfW };
-        }
-      }
+        // Pulley loop path (rectangular with semicircular ends)
+        const loopPathData = `
+          M ${cx - hw} ${ideY}
+          L ${cx - hw} ${devY}
+          A ${hw} ${hw} 0 0 0 ${cx + hw} ${devY}
+          L ${cx + hw} ${ideY}
+          A ${hw} ${hw} 0 0 0 ${cx - hw} ${ideY}
+        `.replace(/\s+/g, ' ').trim();
 
-      update() {
-        this.progress += this.speed;
-        return this.progress < 1;
-      }
+        const loopPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        loopPath.setAttribute('d', loopPathData);
+        loopPath.classList.add('sharing-pipe');
+        sharingPipesGroup.appendChild(loopPath);
+        loopPaths.push(loopPath);
 
-      draw(rect) {
-        const pos = this.getPosition(rect);
-        sCtx.beginPath();
-        sCtx.arc(pos.x, pos.y, this.size, 0, Math.PI * 2);
-        sCtx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-        sCtx.fill();
-      }
-    }
+        // Transfer path from DEV to memory - extend to stadium center for proper connection
+        const devBottom = devY + hw;
+        const memTop = h * MEMORY_CY; // connect to stadium center
+        const transferPathData = `M ${cx} ${devBottom} L ${cx} ${memTop}`;
 
-    // Memory dot - travels along stadium shape
-    class MemoryDot {
-      constructor() {
-        this.progress = 0;
-        this.speed = 0.002 + Math.random() * 0.002;
-        this.size = 3;
-      }
+        const transferPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        transferPath.setAttribute('d', transferPathData);
+        transferPath.classList.add('sharing-pipe');
+        sharingPipesGroup.appendChild(transferPath);
+        transferPaths.push(transferPath);
+      });
 
-      getPosition(rect) {
-        const w = rect.width;
-        const h = rect.height;
-        const mcx = w * 0.5;
-        const mcy = h * MEMORY_CY;
-        const halfW = (w * MEMORY_WIDTH) / 2 - MEMORY_RADIUS;
-        const r = MEMORY_RADIUS;
-
-        // Stadium perimeter: left-arc, bottom, right-arc, top
-        const arcLen = Math.PI * r;
-        const straightLen = halfW * 2;
-        const total = arcLen + straightLen + arcLen + straightLen;
-
-        const s1 = arcLen / total;
-        const s2 = (arcLen + straightLen) / total;
-        const s3 = (arcLen + straightLen + arcLen) / total;
-
-        if (this.progress < s1) {
-          // Left semicircle
-          const t = this.progress / s1;
-          const angle = Math.PI / 2 + t * Math.PI;
-          return { x: mcx - halfW + Math.cos(angle) * r, y: mcy + Math.sin(angle) * r };
-        } else if (this.progress < s2) {
-          // Bottom straight
-          const t = (this.progress - s1) / (s2 - s1);
-          return { x: mcx - halfW + t * (halfW * 2), y: mcy + r };
-        } else if (this.progress < s3) {
-          // Right semicircle
-          const t = (this.progress - s2) / (s3 - s2);
-          const angle = -Math.PI / 2 + t * Math.PI;
-          return { x: mcx + halfW + Math.cos(angle) * r, y: mcy + Math.sin(angle) * r };
-        } else {
-          // Top straight
-          const t = (this.progress - s3) / (1 - s3);
-          return { x: mcx + halfW - t * (halfW * 2), y: mcy - r };
-        }
-      }
-
-      update() {
-        this.progress += this.speed;
-        return this.progress < 1;
-      }
-
-      draw(rect) {
-        const pos = this.getPosition(rect);
-        sCtx.beginPath();
-        sCtx.arc(pos.x, pos.y, this.size, 0, Math.PI * 2);
-        sCtx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-        sCtx.fill();
-      }
-    }
-
-    // Transfer dot - between loop and memory
-    class TransferDot {
-      constructor(devIndex, toMemory) {
-        this.devIndex = devIndex;
-        this.toMemory = toMemory;
-        this.progress = 0;
-        this.speed = 0.006 + Math.random() * 0.004;
-        this.size = 3;
-      }
-
-      getPosition(rect) {
-        const w = rect.width;
-        const h = rect.height;
-        const devX = w * DEV_X[this.devIndex];
-        const halfW = LOOP_WIDTH / 2;
-        const startY = h * DEV_Y + halfW;  // Bottom of pulley arc
-        const endY = h * MEMORY_CY - MEMORY_RADIUS;  // Top of memory
-
-        if (this.toMemory) {
-          return { x: devX, y: startY + (endY - startY) * this.progress };
-        } else {
-          return { x: devX, y: endY + (startY - endY) * this.progress };
-        }
-      }
-
-      update() {
-        this.progress += this.speed;
-        return this.progress < 1;
-      }
-
-      draw(rect) {
-        const pos = this.getPosition(rect);
-        sCtx.beginPath();
-        sCtx.arc(pos.x, pos.y, this.size, 0, Math.PI * 2);
-        sCtx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-        sCtx.fill();
-      }
-    }
-
-    // Draw pulley loop pipe - wraps around circles
-    function drawLoopPipe(rect, devIndex) {
-      const w = rect.width;
-      const h = rect.height;
-      const cx = w * DEV_X[devIndex];
-      const ideY = h * IDE_Y;
-      const devY = h * DEV_Y;
-      const halfW = LOOP_WIDTH / 2;
-
-      sCtx.strokeStyle = 'rgba(255, 255, 255, 0.18)';
-      sCtx.lineWidth = 2;
-      sCtx.lineCap = 'round';
-      sCtx.lineJoin = 'round';
-
-      // Pulley wraps around IDE circle (top) and DEV circle (bottom)
-      // Left side: goes down, wraps around DEV bottom, comes up right side, wraps around IDE top
-      sCtx.beginPath();
-
-      // Start at left of IDE circle
-      sCtx.moveTo(cx - halfW, ideY);
-
-      // Left vertical down to DEV level
-      sCtx.lineTo(cx - halfW, devY);
-
-      // Wrap around DEV circle bottom (semicircle from left to right)
-      sCtx.arc(cx, devY, halfW, Math.PI, 0, true);
-
-      // Right vertical up to IDE level
-      sCtx.lineTo(cx + halfW, ideY);
-
-      // Wrap around IDE circle top (semicircle from right to left)
-      sCtx.arc(cx, ideY, halfW, 0, Math.PI, true);
-
-      sCtx.stroke();
-
-      // Vertical pipe from DEV to memory - starts at bottom of DEV embrace
-      const devBottom = devY + halfW;
-      const memTop = h * MEMORY_CY - MEMORY_RADIUS;
-      sCtx.beginPath();
-      sCtx.moveTo(cx, devBottom);
-      sCtx.lineTo(cx, memTop);
-      sCtx.stroke();
-    }
-
-    // Draw stadium-shaped memory (rounded rectangle) - pipes connect to top
-    function drawMemoryPipe(rect) {
-      const w = rect.width;
-      const h = rect.height;
+      // Memory stadium path
       const mcx = w * 0.5;
       const mcy = h * MEMORY_CY;
-      const halfW = (w * MEMORY_WIDTH) / 2;
+      const memHalfW = (w * MEMORY_WIDTH_RATIO) / 2;
       const r = MEMORY_RADIUS;
 
-      sCtx.strokeStyle = 'rgba(255, 255, 255, 0.18)';
-      sCtx.lineWidth = 2;
+      const memoryPathData = `
+        M ${mcx - memHalfW + r} ${mcy - r}
+        L ${mcx + memHalfW - r} ${mcy - r}
+        A ${r} ${r} 0 0 1 ${mcx + memHalfW - r} ${mcy + r}
+        L ${mcx - memHalfW + r} ${mcy + r}
+        A ${r} ${r} 0 0 1 ${mcx - memHalfW + r} ${mcy - r}
+      `.replace(/\s+/g, ' ').trim();
 
-      // Stadium shape - fully rounded ends
-      sCtx.beginPath();
-      // Start at top left
-      sCtx.moveTo(mcx - halfW + r, mcy - r);
-      // Top edge
-      sCtx.lineTo(mcx + halfW - r, mcy - r);
-      // Right semicircle
-      sCtx.arc(mcx + halfW - r, mcy, r, -Math.PI / 2, Math.PI / 2);
-      // Bottom edge
-      sCtx.lineTo(mcx - halfW + r, mcy + r);
-      // Left semicircle
-      sCtx.arc(mcx - halfW + r, mcy, r, Math.PI / 2, -Math.PI / 2);
-      sCtx.stroke();
-    }
+      memoryPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      memoryPath.setAttribute('d', memoryPathData);
+      memoryPath.classList.add('sharing-pipe');
+      memoryPath.setAttribute('fill', '#000000'); // black fill to hide lines behind
+      // Append to nodesGroup (rendered later) to be on top and hide transfer lines
+      sharingNodesGroup.appendChild(memoryPath);
 
-    // Draw nodes on top
-    function drawNodes(rect) {
-      const w = rect.width;
-      const h = rect.height;
+      // Create node circles and labels
+      DEV_X_POSITIONS.forEach((xRatio, i) => {
+        const cx = w * xRatio;
+        const ideY = h * IDE_NODE_Y;
+        const devY = h * DEV_NODE_Y;
 
-      DEV_X.forEach((dx, i) => {
-        const cx = w * dx;
-        const ideY = h * IDE_Y;
-        const devY = h * DEV_Y;
-        const logoSize = 50;
+        // IDE node circle (black with border)
+        const ideCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        ideCircle.setAttribute('cx', cx);
+        ideCircle.setAttribute('cy', ideY);
+        ideCircle.setAttribute('r', IDE_CIRCLE_RADIUS);
+        ideCircle.classList.add('node-circle');
+        sharingNodesGroup.appendChild(ideCircle);
 
-        // IDE circle
-        sCtx.fillStyle = '#000000';
-        sCtx.beginPath();
-        sCtx.arc(cx, ideY, IDE_RADIUS, 0, Math.PI * 2);
-        sCtx.fill();
-        sCtx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-        sCtx.lineWidth = 2;
-        sCtx.stroke();
+        // IDE logo image
+        const logoImg = document.createElementNS('http://www.w3.org/2000/svg', 'image');
+        logoImg.setAttribute('href', ideLogoSrcs[i]);
+        logoImg.setAttribute('x', cx - 25);
+        logoImg.setAttribute('y', ideY - 25);
+        logoImg.setAttribute('width', 50);
+        logoImg.setAttribute('height', 50);
+        sharingNodesGroup.appendChild(logoImg);
 
-        // IDE logo
-        const logo = ideLogos[i].img;
-        if (logo.complete) {
-          sCtx.drawImage(logo, cx - logoSize / 2, ideY - logoSize / 2, logoSize, logoSize);
-        }
-
-        // DEV circle
-        sCtx.fillStyle = '#000000';
-        sCtx.beginPath();
-        sCtx.arc(cx, devY, DEV_RADIUS, 0, Math.PI * 2);
-        sCtx.fill();
-        sCtx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-        sCtx.lineWidth = 2;
-        sCtx.stroke();
+        // DEV node circle
+        const devCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        devCircle.setAttribute('cx', cx);
+        devCircle.setAttribute('cy', devY);
+        devCircle.setAttribute('r', DEV_CIRCLE_RADIUS);
+        devCircle.classList.add('node-circle');
+        sharingNodesGroup.appendChild(devCircle);
 
         // DEV label
-        sCtx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-        sCtx.font = '10px JetBrains Mono';
-        sCtx.textAlign = 'center';
-        sCtx.fillText('DEV', cx, devY + 4);
+        const devLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        devLabel.setAttribute('x', cx);
+        devLabel.setAttribute('y', devY + 4);
+        devLabel.setAttribute('text-anchor', 'middle');
+        devLabel.setAttribute('fill', 'rgba(255, 255, 255, 0.6)');
+        devLabel.setAttribute('font-size', '10');
+        devLabel.setAttribute('font-family', 'JetBrains Mono');
+        devLabel.textContent = 'DEV';
+        sharingNodesGroup.appendChild(devLabel);
       });
 
       // Memory label
-      sCtx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-      sCtx.font = '10px JetBrains Mono';
-      sCtx.textAlign = 'center';
-      sCtx.fillText('SHARED SKILLS', w * 0.5, h * MEMORY_CY + 4);
+      const memLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      memLabel.setAttribute('x', mcx);
+      memLabel.setAttribute('y', mcy + 4);
+      memLabel.setAttribute('text-anchor', 'middle');
+      memLabel.setAttribute('fill', 'rgba(255, 255, 255, 0.5)');
+      memLabel.setAttribute('font-size', '10');
+      memLabel.setAttribute('font-family', 'JetBrains Mono');
+      memLabel.textContent = 'SHARED SKILLS';
+      sharingNodesGroup.appendChild(memLabel);
     }
 
-    function spawnDots() {
-      for (let i = 0; i < 4; i++) {
-        if (loopDots[i].length < 3 && Math.random() < 0.025) {
-          loopDots[i].push(new LoopDot(i));
+    // Sharing diagram dots
+    class SharingDot {
+      constructor(pathElement, speed) {
+        this.path = pathElement;
+        this.pathLength = pathElement.getTotalLength();
+        this.distance = 0;
+        this.speed = speed;
+        this.element = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        this.element.setAttribute('r', '3');
+        this.element.setAttribute('fill', 'white');
+        this.element.setAttribute('filter', 'url(#shareDotGlow)');
+        // Set initial position immediately to avoid appearing at (0,0)
+        const startPoint = this.path.getPointAtLength(0);
+        this.element.setAttribute('cx', startPoint.x);
+        this.element.setAttribute('cy', startPoint.y);
+        sharingDotsGroup.appendChild(this.element);
+      }
+
+      update() {
+        this.distance += this.speed;
+
+        if (this.distance >= this.pathLength) {
+          this.element.remove();
+          return false;
         }
+
+        const point = this.path.getPointAtLength(this.distance);
+        this.element.setAttribute('cx', point.x);
+        this.element.setAttribute('cy', point.y);
+
+        // Shiny effect
+        const progress = this.distance / this.pathLength;
+        const shine = 0.6 + (progress * progress * 0.4);
+        this.element.setAttribute('fill', `rgba(255, 255, 255, ${shine})`);
+
+        return true;
       }
-      if (memoryDots.length < 6 && Math.random() < 0.03) {
-        memoryDots.push(new MemoryDot());
+    }
+
+    let sharingDots = [];
+
+    function spawnSharingDots() {
+      // Loop dots
+      loopPaths.forEach((path, i) => {
+        if (Math.random() < 0.02) {
+          sharingDots.push(new SharingDot(path, 2.5 + Math.random() * 1.5));
+        }
+      });
+
+      // Memory dots
+      if (memoryPath && Math.random() < 0.025) {
+        sharingDots.push(new SharingDot(memoryPath, 1.5 + Math.random() * 1.0));
       }
-      if (transferDots.length < 3 && Math.random() < 0.012) {
-        const devIndex = Math.floor(Math.random() * 4);
-        const toMemory = Math.random() < 0.6;
-        transferDots.push(new TransferDot(devIndex, toMemory));
-      }
+
+      // Transfer dots
+      transferPaths.forEach((path, i) => {
+        if (Math.random() < 0.01) {
+          sharingDots.push(new SharingDot(path, 3.0 + Math.random() * 2.0));
+        }
+      });
     }
 
     function animateSharing() {
-      const rect = sharingCanvas.getBoundingClientRect();
-      sCtx.clearRect(0, 0, rect.width, rect.height);
-
-      sTime++;
-      spawnDots();
-
-      // Layer 1: Pipes
-      for (let i = 0; i < 4; i++) {
-        drawLoopPipe(rect, i);
-      }
-      drawMemoryPipe(rect);
-
-      // Layer 2: Dots
-      for (let i = 0; i < 4; i++) {
-        loopDots[i] = loopDots[i].filter(dot => {
-          const alive = dot.update();
-          if (alive) dot.draw(rect);
-          return alive;
-        });
-      }
-      memoryDots = memoryDots.filter(dot => {
-        const alive = dot.update();
-        if (alive) dot.draw(rect);
-        return alive;
-      });
-      transferDots = transferDots.filter(dot => {
-        const alive = dot.update();
-        if (alive) dot.draw(rect);
-        return alive;
-      });
-
-      // Layer 3: Nodes
-      drawNodes(rect);
-
+      sharingDots = sharingDots.filter(dot => dot.update());
+      spawnSharingDots();
       requestAnimationFrame(animateSharing);
     }
 
+    // Initialize sharing diagram after delay
     setTimeout(() => {
+      initSharingDiagram();
       animateSharing();
     }, 3000);
+
+    // Reinitialize on resize
+    window.addEventListener('resize', () => {
+      if (loopPaths.length > 0) {
+        initSharingDiagram();
+      }
+    });
 
     // ==========================================
     // WAITLIST MODAL & FORM
