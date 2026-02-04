@@ -217,21 +217,25 @@
       filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 1));
     }
 
-    /* Position each logo to match IDE_POSITIONS: [0.12, 0.37, 0.63, 0.88] */
+    /* Position each logo to match IDE_POSITIONS: [0.10, 0.30, 0.50, 0.70, 0.90] */
     .ide-logos img:nth-child(1) {
-      left: 12%;
+      left: 10%;
     }
 
     .ide-logos img:nth-child(2) {
-      left: 37%;
+      left: 30%;
     }
 
     .ide-logos img:nth-child(3) {
-      left: 63%;
+      left: 50%;
     }
 
     .ide-logos img:nth-child(4) {
-      left: 88%;
+      left: 70%;
+    }
+
+    .ide-logos img:nth-child(5) {
+      left: 90%;
     }
 
     /* Energy Beam behind IDEs */
@@ -1149,8 +1153,8 @@
     let heroTrainDots = [];
 
     function spawnHeroDot() {
-      if (heroTrainDots.length < 80) {
-        const pathIndex = Math.floor(Math.random() * 4);
+      if (heroTrainDots.length < 100) {
+        const pathIndex = Math.floor(Math.random() * pipePaths.length);
         heroTrainDots.push(new TrainDot(pipePaths[pathIndex]));
       }
     }
@@ -1191,7 +1195,7 @@
     const DEV_NODE_Y = 0.48;
     const LOOP_HALF_WIDTH = 55; // wider pulley for better proportion
     const MEMORY_CY = 0.85;
-    const MEMORY_WIDTH_RATIO = 0.70;
+    const MEMORY_WIDTH_RATIO = 0.92; // Widened to ensure outer lines (10% and 90%) touch the stadium
     const MEMORY_RADIUS = 35; // thicker stadium with more internal padding
     const IDE_CIRCLE_RADIUS = 35;
     const DEV_CIRCLE_RADIUS = 28;
